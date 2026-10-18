@@ -13,7 +13,11 @@ import {
   MESSAGE_JOB_NAME,
   POSTBACK_JOB_NAME,
   FOLLOWUP_JOB_NAME,
+  AI_REPLY_JOB_NAME,
+  ECHO_JOB_NAME,
   type DmQueueJob,
+  type ProcessAiReplyJob,
+  type ProcessEchoJob,
   type ProcessCommentJob,
   type ProcessMessageJob,
   type ProcessPostbackJob,
@@ -54,6 +58,7 @@ import { TRACKED_LINK_ORDER } from "@/lib/tracking/link-order";
 import { hashRecipientId } from "@/lib/tracking/server";
 
 import { ZernioApiError } from "@/lib/zernio/client";
+import { processAiReply, processEcho } from "@/lib/ai/reply";
 
 const BACKOFF_DELAYS = [5 * 60 * 1000, 15 * 60 * 1000, 45 * 60 * 1000];
 
@@ -1298,6 +1303,7 @@ async function processMessage(job: Job<ProcessMessageJob>): Promise<void> {
   });
 
   const dedupeId = `dm:${messageId}`;
+  let anyMatched = false;
 
   for (const automation of automations) {
     const matchResult = automation.matchAnyWord
@@ -1309,6 +1315,7 @@ async function processMessage(job: Job<ProcessMessageJob>): Promise<void> {
         );
 
     if (!matchResult.matched) continue;
+    anyMatched = true;
 
     const existingLog = await prisma.dmLog.findUnique({
       where: {
@@ -1531,6 +1538,16 @@ async function processMessage(job: Job<ProcessMessageJob>): Promise<void> {
       throw error;
     }
   }
+
+  // No campaign claimed this DM: let the AI fallback answer it (a no-op when
+  // the account has AI replies turned off).
+  if (!anyMatched) {
+    await getDMQueue().add(AI_REPLY_JOB_NAME, job.data, {
+      jobId: `ai_${instagramAccountId}_${Buffer.from(messageId).toString(
+        "base64url"
+      )}`,
+    });
+  }
 }
 
 async function dispatchJob(job: Job<DmQueueJob>): Promise<void> {
@@ -1542,6 +1559,12 @@ async function dispatchJob(job: Job<DmQueueJob>): Promise<void> {
   }
   if (job.name === MESSAGE_JOB_NAME) {
     return processMessage(job as Job<ProcessMessageJob>);
+  }
+  if (job.name === AI_REPLY_JOB_NAME) {
+    return processAiReply(job as Job<ProcessAiReplyJob>);
+  }
+  if (job.name === ECHO_JOB_NAME) {
+    return processEcho(job as Job<ProcessEchoJob>);
   }
   return processComment(job as Job<ProcessCommentJob>);
 }

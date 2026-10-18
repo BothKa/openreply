@@ -144,6 +144,8 @@ model InstagramAccount {
   dmLogs      DmLog[]
   linkClicks  LinkClick[]
   followerSnapshots FollowerSnapshot[]
+  aiSettings        AiSettings?
+  aiConversations   AiConversation[]
 
   @@index([workspaceId])
 }
@@ -418,4 +420,58 @@ model ZernioConnection {
 model PostbackDelivery {
   id String @id
   createdAt DateTime @default(now())
+}
+
+// ─── AI fallback replies ───────────────────────────────────────────────────────
+// A DM that matches no campaign keyword is answered by Claude, grounded in the
+// account's knowledge base. A conversation switched to HUMAN is never answered
+// automatically until someone hands it back.
+
+model AiSettings {
+  id                 String   @id @default(cuid())
+  instagramAccountId String   @unique
+  enabled            Boolean  @default(false)
+  systemPrompt       String   @default("")
+  knowledgeBase      String   @default("")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  instagramAccount InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+}
+
+enum AiConversationMode {
+  BOT
+  HUMAN
+}
+
+model AiConversation {
+  id                 String             @id @default(cuid())
+  instagramAccountId String
+  senderId           String
+  mode               AiConversationMode @default(BOT)
+  handoffReason      String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  instagramAccount InstagramAccount @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+  messages         AiMessage[]
+
+  @@unique([instagramAccountId, senderId])
+  @@index([mode])
+}
+
+model AiMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+  role           String // "user" | "assistant"
+  content        String
+  // Inbound: the Instagram message id. Assistant: the message id it answers.
+  // Unique so a retried job never stores or answers the same DM twice.
+  externalId     String?  @unique
+  replyTo        String?  @unique
+  createdAt      DateTime @default(now())
+
+  conversation AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
 }

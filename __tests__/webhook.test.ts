@@ -9,6 +9,7 @@ import {
   verifyWebhookSignature,
   parseCommentEvents,
   parseMessageEvents,
+  parseEchoEvents,
   parseReadEvents,
 } from "../lib/meta/webhook";
 import { createHmac } from "crypto";
@@ -513,5 +514,29 @@ describe("parseReadEvents", () => {
     };
 
     expect(parseReadEvents(payload)).toHaveLength(0);
+  });
+});
+
+describe("parseEchoEvents", () => {
+  function payload(message: Record<string, unknown>, sender = "ig_456", recipient = "user_1") {
+    return {
+      object: "instagram",
+      entry: [{ id: "ig_456", messaging: [{ sender: { id: sender }, recipient: { id: recipient }, message }] }],
+    } as Parameters<typeof parseEchoEvents>[0];
+  }
+
+  it("returns echoes of messages the account sent", () => {
+    expect(parseEchoEvents(payload({ mid: "mid_out", text: "hi", is_echo: true }))).toEqual([
+      { instagramAccountId: "ig_456", messageId: "mid_out", recipientId: "user_1" },
+    ]);
+  });
+
+  it("counts attachment-only echoes too", () => {
+    expect(parseEchoEvents(payload({ mid: "mid_img", is_echo: true }))).toHaveLength(1);
+  });
+
+  it("ignores inbound messages and deletions", () => {
+    expect(parseEchoEvents(payload({ mid: "mid_in", text: "hi" }, "user_1", "ig_456"))).toHaveLength(0);
+    expect(parseEchoEvents(payload({ mid: "mid_out", is_echo: true, is_deleted: true }))).toHaveLength(0);
   });
 });

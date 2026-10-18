@@ -119,6 +119,18 @@ vi.mock("@/lib/queue/client", () => ({
   POSTBACK_JOB_NAME: "process-postback",
   FOLLOWUP_JOB_NAME: "process-followup",
   MESSAGE_JOB_NAME: "process-message",
+  AI_REPLY_JOB_NAME: "process-ai-reply",
+  ECHO_JOB_NAME: "process-echo",
+}));
+
+vi.mock("@/lib/ai/sent-messages", () => ({
+  rememberSent: <T,>(send: Promise<T>) => send,
+  wasSentByUs: vi.fn(),
+}));
+
+vi.mock("@/lib/ai/reply", () => ({
+  processAiReply: vi.fn(),
+  processEcho: vi.fn(),
 }));
 
 vi.mock("bullmq", () => {
@@ -1050,6 +1062,30 @@ describe("DM Worker — DM keyword trigger", () => {
 
     expect(mockSendDirectMessage).not.toHaveBeenCalled();
     expect(mockSendDirectMessageWithLinkButton).not.toHaveBeenCalled();
+  });
+
+  it("should hand a DM that matches no keyword to the AI fallback", async () => {
+    mockMatchKeywords.mockReturnValue({ matched: false, matchedKeyword: null });
+
+    const processor = getProcessor();
+    await processor(createMockMessageJob({ messageText: "hello there" }));
+
+    expect(mockQueueAdd).toHaveBeenCalledWith(
+      "process-ai-reply",
+      expect.objectContaining({ messageId: "mid_abc", messageText: "hello there" }),
+      { jobId: `ai_ig_456_${Buffer.from("mid_abc").toString("base64url")}` }
+    );
+  });
+
+  it("should not hand a keyword-matched DM to the AI fallback", async () => {
+    const processor = getProcessor();
+    await processor(createMockMessageJob());
+
+    expect(mockQueueAdd).not.toHaveBeenCalledWith(
+      "process-ai-reply",
+      expect.anything(),
+      expect.anything()
+    );
   });
 
   it("should log the reply against the inbound message id for dedup", async () => {

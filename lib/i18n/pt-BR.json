@@ -446,5 +446,22 @@
   "{name} Campaign Report": "Relatório da campanha {name}",
   "{type} post": "Publicação {type}",
   "”": "”",
-  "← Campaigns": "← Campanhas"
+  "← Campaigns": "← Campanhas",
+  "AI Replies": "Respostas com IA",
+  "AI replies": "Respostas com IA",
+  "Loading...": "Carregando...",
+  "Save": "Salvar",
+  "Saving...": "Salvando...",
+  "Could not save": "Não foi possível salvar",
+  "Connect an Instagram account to use AI replies.": "Conecte uma conta do Instagram para usar as respostas com IA.",
+  "DMs that match no campaign keyword are answered by Claude, using only your knowledge base. Complaints, refunds and unanswerable questions are handed to you.": "DMs que não correspondem a nenhuma palavra-chave de campanha são respondidas pelo Claude, usando apenas sua base de conhecimento. Reclamações, reembolsos e perguntas sem resposta são passadas para você.",
+  "Answer unmatched DMs with AI": "Responder com IA as DMs sem palavra-chave",
+  "Brand voice and rules": "Tom de voz e regras da marca",
+  "Knowledge base (FAQ, products, shipping, policies)": "Base de conhecimento (FAQ, produtos, frete, políticas)",
+  "AI conversations": "Conversas com IA",
+  "No AI conversations yet": "Nenhuma conversa com IA ainda",
+  "Human": "Humano",
+  "AI": "IA",
+  "Hand back to AI": "Devolver para a IA",
+  "Take over": "Assumir"
 }

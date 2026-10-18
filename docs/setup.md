@@ -107,6 +107,9 @@ Copy `.env.example` to `.env` for local work, or set these in Vercel and Railway
 | `EMAIL_FROM` | A sender on a domain you verified in Resend. The placeholder will not deliver. |
 | `ALLOWED_EMAILS` | Optional. Comma-separated allowlist of addresses that may sign in, case insensitive. Unset, anyone who reaches your public URL can request a magic link and gets their own workspace, which is worth closing on an instance you run for yourself. |
 | `EMAIL_SERVER` | Optional. An SMTP URL, for example `smtps://login%40example.com:password@mail.example.com:465`. Set it to send magic links through your own mail server instead of Resend; then `RESEND_API_KEY` is not needed. URL-encode special characters in the user and password (`@` becomes `%40`). Port 465 with `smtps://` is implicit TLS, port 587 with `smtp://` is STARTTLS. |
+| `ANTHROPIC_API_KEY` | Optional. Needed only by the worker, and only if you turn on AI replies for an account. DMs that match no campaign keyword are then answered by Claude from that account's knowledge base. |
+| `AI_REPLY_MODEL` | Optional. Claude model for AI replies. Defaults to `claude-opus-5-5`; set `claude-haiku-4-5` for lower cost. |
+| `AI_HANDOFF_EMAIL` | Optional. When the AI hands a conversation to a human, the workspace owners and admins get an email through the same mail setup as sign-in links. Set to `off` to stop these emails. |
 
 **Direct Meta only.** Leave these unset if all accounts use Zernio:
 

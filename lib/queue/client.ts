@@ -77,15 +77,31 @@ export interface ProcessMessageJob {
   senderId: string;
 }
 
+// An inbound DM that matched no campaign keyword, handed to the AI fallback.
+export type ProcessAiReplyJob = ProcessMessageJob;
+
+// An echo of a DM the account sent. If OpenReply didn't send it, a person
+// replied by hand and the AI steps back from that conversation.
+export interface ProcessEchoJob {
+  accountConnectionId?: string;
+  instagramAccountId: string;
+  messageId: string;
+  recipientId: string;
+}
+
 export type DmQueueJob =
   | ProcessCommentJob
   | ProcessPostbackJob
   | ProcessFollowUpJob
-  | ProcessMessageJob;
+  | ProcessMessageJob
+  | ProcessAiReplyJob
+  | ProcessEchoJob;
 
 export const POSTBACK_JOB_NAME = "process-postback";
 export const FOLLOWUP_JOB_NAME = "process-followup";
 export const MESSAGE_JOB_NAME = "process-message";
+export const AI_REPLY_JOB_NAME = "process-ai-reply";
+export const ECHO_JOB_NAME = "process-echo";
 
 let dmQueue: Queue<DmQueueJob> | null = null;
 

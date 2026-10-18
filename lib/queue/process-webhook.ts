@@ -1,9 +1,12 @@
 import { prisma } from '@/lib/db/client';
-import { getDMQueue, MESSAGE_JOB_NAME, POSTBACK_JOB_NAME } from '@/lib/queue/client';
-import { parseCommentEvents, parseMessageEvents, parsePostbackEvents, parseReadEvents } from '@/lib/meta/webhook';
+import { getDMQueue, ECHO_JOB_NAME, MESSAGE_JOB_NAME, POSTBACK_JOB_NAME } from '@/lib/queue/client';
+import { parseCommentEvents, parseEchoEvents, parseMessageEvents, parsePostbackEvents, parseReadEvents } from '@/lib/meta/webhook';
 import { Prisma, type InstagramProvider } from '@/app/generated/prisma/client';
 
 const OPENING_DM_READ_FALLBACK_DELAY_MS = 5 * 60 * 1000;
+// An echo can beat the send call's response, before our own message id is
+// recorded. Waiting keeps our own messages from looking hand-typed.
+const ECHO_CHECK_DELAY_MS = 15 * 1000;
 type InstagramPayload = Parameters<typeof parseCommentEvents>[0];
 
 export async function processInstagramWebhook({ payload: incoming, provider, workspaceId }: {
@@ -125,6 +128,26 @@ export async function processInstagramWebhook({ payload: incoming, provider, wor
           where: { id: webhookEvent.id },
           data: { workspaceId: account.workspaceId },
         });
+      }
+    }
+
+    // Echoes of outbound DMs → detect replies typed by hand in Instagram.
+    // Only for direct Meta: Zernio sends are not recorded by message id.
+    if (provider === "META") {
+      for (const event of parseEchoEvents(payload as Parameters<typeof parseEchoEvents>[0])) {
+        await queue.add(
+          ECHO_JOB_NAME,
+          {
+            instagramAccountId: event.instagramAccountId,
+            accountConnectionId: accountMap.get(event.instagramAccountId)?.id,
+            messageId: event.messageId,
+            recipientId: event.recipientId,
+          },
+          {
+            delay: ECHO_CHECK_DELAY_MS,
+            jobId: `echo_${event.instagramAccountId}_${Buffer.from(event.messageId).toString("base64url")}`,
+          }
+        );
       }
     }
 

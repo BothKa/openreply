@@ -446,5 +446,22 @@
   "{name} Campaign Report": "{name} 活動報表",
   "{type} post": "{type} 貼文",
   "”": "」",
-  "← Campaigns": "← 返回活動列表"
+  "← Campaigns": "← 返回活動列表",
+  "AI Replies": "AI 回覆",
+  "AI replies": "AI 回覆",
+  "Loading...": "載入中…",
+  "Save": "儲存",
+  "Saving...": "儲存中…",
+  "Could not save": "儲存失敗",
+  "Connect an Instagram account to use AI replies.": "請先連結 Instagram 帳號，才能使用 AI 回覆。",
+  "DMs that match no campaign keyword are answered by Claude, using only your knowledge base. Complaints, refunds and unanswerable questions are handed to you.": "沒有命中任何活動關鍵字的私訊，會由 Claude 依照你的知識庫回覆。客訴、退款和答不出來的問題會轉給你處理。",
+  "Answer unmatched DMs with AI": "用 AI 回覆沒命中關鍵字的私訊",
+  "Brand voice and rules": "品牌語氣與規則",
+  "Knowledge base (FAQ, products, shipping, policies)": "知識庫（常見問題、商品、運送、退換貨政策）",
+  "AI conversations": "AI 對話",
+  "No AI conversations yet": "還沒有 AI 對話",
+  "Human": "真人",
+  "AI": "AI",
+  "Hand back to AI": "交還給 AI",
+  "Take over": "手動接手"
 }

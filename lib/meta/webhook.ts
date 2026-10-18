@@ -94,6 +94,12 @@ export interface WebhookMessageEvent {
   senderId: string;
 }
 
+export interface WebhookEchoEvent {
+  instagramAccountId: string;
+  messageId: string;
+  recipientId: string;
+}
+
 export interface WebhookPostbackEvent {
   instagramAccountId: string;
   userId: string;
@@ -233,6 +239,35 @@ export function parseMessageEvents(
         messageId,
         messageText: text,
         senderId,
+      });
+    }
+  }
+
+  return events;
+}
+
+/**
+ * Parse echoes of messages the connected account sent — by OpenReply or by a
+ * person in the Instagram app. The worker tells them apart by message id.
+ */
+export function parseEchoEvents(payload: WebhookPayload): WebhookEchoEvent[] {
+  const events: WebhookEchoEvent[] = [];
+
+  if (payload.object !== "instagram") return events;
+
+  for (const entry of payload.entry ?? []) {
+    for (const messaging of entry.messaging ?? []) {
+      const message = messaging.message;
+      if (!message?.is_echo || message.is_deleted || !message.mid) continue;
+
+      const accountId = entry.id ?? messaging.sender?.id;
+      const recipientId = messaging.recipient?.id;
+      if (!accountId || !recipientId || recipientId === accountId) continue;
+
+      events.push({
+        instagramAccountId: accountId,
+        messageId: message.mid,
+        recipientId,
       });
     }
   }
